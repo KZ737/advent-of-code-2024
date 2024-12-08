@@ -4,35 +4,41 @@ inputfile = open("./day-7/input.txt", "r")
 
 
 """
-We define an `ops` enum containing the integer addition and multiplication functions.
+We define an `ops` tuple containing the integer addition and the multiplication functions.
 """
-ops = {0: int.__add__, 1: int.__mul__}
+ops = (int.__add__, int.__mul__)
 
 
 """
-From a list of numbers (of length N) and a list of operators (of length N-1), the `calcVal` function calculates the value of the line left-to-right: it takes the first number from the line, `leftVal`. This will become our running total. The function enters a loop where we take the next values and operators from their corresponding lists, then calculate the result of the next operator on `leftVal` and the next value, and assign this value to `leftVal`.
-After we have depleted the list of numbers, the loop exits, and returns `leftVal`, which is by this point equal to the result of the whole list using the given operators.
+From the test value, a starting value (the first number after the test value), a list of numbers (of length N-1), and a list of operators (of length N-1), the `isPossible` function calculates if the test value can be constructed from the list of numbers.
+First, we check if the starting value is larger than the test value: since none of our operations (addition, multiplication) can result in an output less than its inputs, if the starting value is larger than the test value, the test value cannot be constructed, therefore we return false.
+Then, we check whether we have numbers to use from the list or not: if we don't, and the starting value is equal to the test value, then we have constructed the test value, therefore we return true. If we don't have any more numbers, but the starting value is different from the test value, we failed to construct the test value, therefore we return false.
+If the previous conditions were not met, i.e. we have not overshot the test value, and we still have numbers in the list, then we loop through all the possible operations for the next step, calculate the result (`nextOp(leftVal, numList[0])`), then recursively call this same function with this newly calculated number as the starting value, and with the numbers and operations lists shortened by one (via slicing from their second elements).
+If the recursive function call returns true for any operation in the loop, then we return true. If it returns false from all of them, we return false.
 """
-def calcVal(numList, operators):
-    numListCopy = numList[:]
-    leftVal = numListCopy.pop(0)
-    while numListCopy:
-        rightVal = numListCopy.pop(0)
-        curOp = operators.pop(0)
-        leftVal = ops[curOp](leftVal, rightVal)
-    return leftVal
-
-
-"""
-The `testLine` function takes a test value and a list of numbers, gets all possible combinations of operators given the length of the list of numbers, then loops through all combinations and checks if the value obtained by a given combination on the list is equal to the test value. If it is, we return true, as the test value can be produced by the list of numbers. If we exhausted all the possible combinations and we haven't found any that would result in the test value, we return false.
-"""
-def testLine(testValue, numList):
-    numOfOps = len(numList)-1
-    combinations = list(map(list, itertools.product(ops.keys(), repeat=numOfOps)))
-    for combination in combinations:
-        if testValue == calcVal(numList, combination):
+def isPossible(testVal, leftVal, numList, operators):
+    if leftVal > testVal:
+        return False
+    if len(numList) == 0:
+        return testVal == leftVal
+    for nextOp in operators[0]:
+        if isPossible(testVal, nextOp(leftVal, numList[0]), numList[1:], operators[1:]):
             return True
     return False
+
+
+"""
+The `testLine` function takes a test value and a list of numbers.
+We optimize by restricting the last operation: if the test value is not divisible by the last number in the list, we exclude multiplication from the operations in the last place.
+We construct our list of possible operations by repeating all the operations N-2 times, adding onto this the possibilities for the last operation, obtained by the previous two tests.
+Then we return the value of the `isPossible` function for the given test value, numbers list, and operations list.
+"""
+def testLine(testValue, numList):
+    lastOp = (ops[0],)
+    lastNum = numList[-1]
+    if not testValue%lastNum:
+        lastOp += (ops[1],)
+    return isPossible(testValue, numList[0], numList[1:], (*itertools.repeat(ops, len(numList)-2), lastOp))
 
 
 """
