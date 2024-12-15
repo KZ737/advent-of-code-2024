@@ -18,7 +18,7 @@ for line in inputfile:
 
 """
 The move function takes the current state of the map and the direction the guard is going as an input.
-Directions: 0 -- up, 1 -- down, 2 -- left, 3 -- right
+Directions: 1 -- up, 2 -- down, 3 -- left, 4 -- right
 We calculate the current position of the guard by finding the 2 in the map.
 We calculate the path ahead of the guard by slicing the array in the proper dimensions depending on the direction. We also save the next direction.
 We look for obstacles in the guard's path by searching for 1s in her path.
